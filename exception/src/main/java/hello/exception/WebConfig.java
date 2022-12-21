@@ -2,13 +2,16 @@ package hello.exception;
 
 import hello.exception.filter.LogFilter;
 import hello.exception.interceptor.LogInterceptor;
+import hello.exception.resolver.MyHandlerExceptionResolver;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
-import lombok.extern.java.Log;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -24,7 +27,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     }
 
-//    @Bean
+    @Override
+    public void extendHandlerExceptionResolvers(List<HandlerExceptionResolver> resolvers) {
+        resolvers.add(new MyHandlerExceptionResolver());
+    }
+
+    //    @Bean
     public FilterRegistrationBean logFilter() {
         FilterRegistrationBean<Filter> filterFilterRegistrationBean = new FilterRegistrationBean<>();
         filterFilterRegistrationBean.setFilter(new LogFilter());
