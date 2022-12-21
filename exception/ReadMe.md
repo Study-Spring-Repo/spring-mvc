@@ -239,3 +239,92 @@ public interface HandlerExceptionResolver {
 - ExceptionResolver가 ModelAndView를 반환하는 이유
   - Exception을 처리해서 정상 흐름 처럼 변경한다.
   - Exception을 Resolve(해결)한다.
+
+
+> ### ExceptionResolver
+
+스프링 부트는 `ExceptionResolver`를 기본으로 제공한다.
+
+- `HandlerExceptionResolverComposite`에 다음 순서로 등록한다.
+  - `ExceptionHandlerExceptionResolver`
+  - `ResponseStatusExceptionResolver`
+  - `DefaultHandlerExceptionResolver`
+
+> ### ExceptionHandlerExceptionResolver
+
+- `@ExceptionHandler`를 처리한다.
+- API 예외 처리의 대부분을 해결한다.
+
+> ### ResponseStatusExceptionResolver
+
+- 예외에 따라서 HTTP 상태 코드를 지정해준다.
+  - ex) `@ResponseStatus(value = HttpStatus.NOT_FOUND)`
+
+
+- 두 가지 경우를 처리한다.
+  - `@ResponseStatus` 예외
+  - `ResponseStatusException` 예외
+
+<br>
+
+`@ResponseStatus`
+- 애노테이션을 적용하면 HTTP 상태 코드를 변경한다.
+
+```java
+@ResponseStatus(code = HttpStatus.BAD_REQUEST, reason = "error.bad")
+public class BadRequestException extends RuntimeException {
+}
+```
+
+- 메시지 기능을 추가한다. 
+```properties
+# messages.properties
+error.bad=잘못된 요청입니다.
+```
+
+- `@ResponseStatus` 동작 방식
+  - BadRequestException 예외가 컨트롤러 밖으로 넘어간다.
+  - ResponseStatusExceptionResolver 예외가 해당 애노테이션을 확인한다.
+    - 오류 코드를 설정값으로 변경한다.
+    - 메시지를 담는다.
+    - `response.sendError(statusCode, resolvedReason)`을 호출한다.
+
+```json
+ {
+      "status": 400,
+      "error": "Bad Request",
+      "exception": "hello.exception.exception.BadRequestException", 
+      "message": "잘못된 요청입니다.",
+      "path": "/api/response-status-ex1"
+}
+```
+
+<br>
+
+`ResponseStatusException`
+- 위에서 이용한 @ResponseStatus는 개발자가 직접 변경할 수 없는 예외에 적용할 수 없다.
+- 이럴 경우에 `ResponseStatusException` 예외를 이용한다.
+
+
+```java
+@GetMapping("/api/response-status-ex2")
+public String responseStatusEx2() {
+    throw new ResponseStatusException(HttpStatus.NOT_FOUND, 
+      "error.bad", 
+      new IllegalArgumentException());
+}
+```
+
+```json
+{
+      "status": 404,
+      "error": "Not Found",
+      "exception": "org.springframework.web.server.ResponseStatusException", 
+      "message": "잘못된 요청입니다.",
+      "path": "/api/response-status-ex2"
+}
+```
+
+> ### DefaultHandlerExceptionResolver
+
+- 스프링 내부 기본 예외 처리
