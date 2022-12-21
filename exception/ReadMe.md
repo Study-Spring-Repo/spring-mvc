@@ -145,7 +145,7 @@ public class WebConfig implements WebMvcConfigurer {
 4. WAS(/error-page/500, dispatchType=ERROR) -> 필터(x) -> 서블릿 -> 인터셉터(x) -> 컨트롤러(/error-page/500) -> View
 ```
 
-> ### 정적 오류 페이지
+> ### 정적 오류 페이지1
 
 - 스프링부트는 `ErrorPage`를 자동 등록한다.
   - `/error` 경로 : 기본 오류 페이지 설정
@@ -172,4 +172,70 @@ public class WebConfig implements WebMvcConfigurer {
 
 # API 예외 처리
 
+> ### BasicErrorController
 
+- 스프링 부트가 제공하는 기본 오류 방식
+
+
+```java
+package org.springframework.boot.autoconfigure.web.servlet.error;
+
+/**
+ * Basic global error @Controller, rendering ErrorAttributes. More specific errors can be handled either using 
+ * Spring MVC abstractions (e.g. @ExceptionHandler) or by adding servlet server error pages.
+ * Since:
+ * 1.0.0
+ * See Also:
+ * ErrorAttributes, ErrorProperties
+ * Author:
+ * Dave Syer, Phillip Webb, Michael Stummvoll, Stephane Nicoll, Scott Frederick
+ */
+@Controller
+@RequestMapping("${server.error.path:${error.path:/error}}")
+public class BasicErrorController extends AbstractErrorController {
+  // ...
+
+  @RequestMapping(produces = MediaType.TEXT_HTML_VALUE)
+  public ModelAndView errorHtml(HttpServletRequest request, HttpServletResponse response) {
+        // ...
+  }
+
+  @RequestMapping
+  public ResponseEntity<Map<String, Object>> error(HttpServletRequest request) {
+        // ...
+  }
+}
+```
+
+- `errorHtml()`
+  - produces = MediaType.TEXT_HTML_VALUE
+  - 클라이언트 요청의 Accept 헤더 값이 `text/html` 일경우에는 `errorHtml()`을 호출해서 view를 제공한다.
+- `error()`
+  - 그외 경우에 호출되고 `ResponseEntity`로 HTTP Body에 JSON 데이터를 반환한다.
+
+> ### HandlerExceptionResolver
+
+- 스프링 MVC는 컨트롤러(Handler) 박으로 예외가 던져진 경우 예외를 해결한다.
+- 컨트롤러 밖으로 던져진 혜외 해결 후 동작 방식을 변경할 수 있다.
+
+![img.png](img.png)
+
+```java
+package org.springframework.web.servlet;
+
+public interface HandlerExceptionResolver {
+  ModelAndView resolveException(
+          HttpServletRequest request, 
+          HttpServletResponse response,
+          Object handler, 
+          Exception ex);
+}
+```
+
+- `handler` : 핸들러(컨트롤러) 정보
+- `Exception ex` : 핸들러(컨트롤러)에서 발생한 예외
+
+
+- ExceptionResolver가 ModelAndView를 반환하는 이유
+  - Exception을 처리해서 정상 흐름 처럼 변경한다.
+  - Exception을 Resolve(해결)한다.
