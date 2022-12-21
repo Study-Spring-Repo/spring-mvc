@@ -327,4 +327,33 @@ public String responseStatusEx2() {
 
 > ### DefaultHandlerExceptionResolver
 
-- 스프링 내부 기본 예외 처리
+- `DefaultHandlerExceptionResolver`
+  - 스프링 내부에서 발생하는 스프링 예외를 처리한다.
+  - ex) `TypeMismatchException`
+    - 파라미터 바인딩 시 예외 발생 처리
+    - 원래대로라면 서블릿 컨테이너까지 오류가 올라가고, 결과적으로 `500 오류`를 발생한다.
+      - 하지만 `500 오류`보다 `400 오류` 를 발생하는 것이 더 정확하다고 할 수 있다.
+      - 파라미터 바인딩 오류는 대부분 클라이언트 측의 잘못된 요청이기 때문이다.
+    - `DefaultHandlerExceptionResolver`는 `400 오류`로 변경해준다.
+
+<br>
+
+`DefaultHandlerExceptionResolver` 내부에 `handleTypeMismatch()` 메서드를 보면 `response.sendError()` 메서드를 볼 수 있다.
+```java
+package org.springframework.web.servlet.mvc.support;
+
+public class DefaultHandlerExceptionResolver extends AbstractHandlerExceptionResolver {
+  // ...
+
+  protected ModelAndView handleTypeMismatch(TypeMismatchException ex,
+                                            HttpServletRequest request, HttpServletResponse response, @Nullable Object handler) throws IOException {
+
+    response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+    return new ModelAndView();
+  }
+  
+  //...
+}
+```
+
+![img_1.png](img_1.png)
